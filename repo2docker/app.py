@@ -491,6 +491,18 @@ class Repo2Docker(Application):
         picked_content_provider = None
         for ContentProvider in self.content_providers:
             cp = ContentProvider()
+            self.log.info(f"DEBUG: content provider is {cp.__class__.__name__}...")
+            if "Local" in {cp.__class__.__name__}:
+                print("skipping")
+                continue
+            if "Zenodo" in {cp.__class__.__name__}:
+                print("skipping")
+                continue
+            if "Figshare" in {cp.__class__.__name__}:
+                print("skipping")
+                continue
+            print("")
+            self.log.info(f"DEBUG: About to detect. URL is {url}. Trying content provider {cp.__class__.__name__}\n")
             spec = cp.detect(url, ref=ref)
             if spec is not None:
                 picked_content_provider = cp
@@ -504,6 +516,7 @@ class Repo2Docker(Application):
         if swh_token and isinstance(picked_content_provider, contentproviders.Swhid):
             picked_content_provider.set_auth_token(swh_token)
 
+        print("about to fetch...")
         for log_line in picked_content_provider.fetch(
             spec, checkout_path, yield_output=self.json_logs
         ):

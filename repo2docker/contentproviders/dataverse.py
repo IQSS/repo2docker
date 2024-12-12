@@ -37,9 +37,13 @@ class Dataverse(DoiProvider):
         - doi:10.7910/DVN/6ZXAGT/3YRRYJ
 
         """
+        self.log.debug(f"DEBUG In Dataverse detect(). DOI is {doi}\n")
         url = self.doi2url(doi)
         # Parse the url, to get the base for later API calls
         parsed_url = urlparse(url)
+        self.log.info(f"DEBUG: ")
+        self.log.info(f"DEBUG: parsed_url: {parsed_url}")
+        # exit(1)
 
         # Check if the url matches any known Dataverse installation, bail if not.
         host = next(
@@ -53,9 +57,11 @@ class Dataverse(DoiProvider):
         if host is None:
             return
 
+        # exit(1)
         query_args = parse_qs(parsed_url.query)
         # Corner case handling
         if parsed_url.path.startswith("/file.xhtml"):
+            print("got here 1")
             # There's no way of getting file information using its persistentId, the only thing we can do is assume that doi
             # is structured as "doi:<dataset_doi>/<file_doi>" and try to handle dataset that way.
             new_doi = doi.rsplit("/", 1)[0]
@@ -64,6 +70,7 @@ class Dataverse(DoiProvider):
                 return
             return self.detect(new_doi)
         elif parsed_url.path.startswith("/api/access/datafile"):
+            print("got here 2")
             # Raw url pointing to a datafile is a typical output from an External Tool integration
             entity_id = os.path.basename(parsed_url.path)
             search_query = "q=entityId:" + entity_id + "&type=file"
@@ -84,7 +91,12 @@ class Dataverse(DoiProvider):
             parsed_url.path.startswith("/dataset.xhtml")
             and "persistentId" in query_args
         ):
+            print()
+            print("got here 3, for example from this: jupyter-repo2docker doi:10.7910/DVN/TJCLKP")
             self.record_id = deep_get(query_args, "persistentId.0")
+            print("self.record_id BEGIN")
+            print(self.record_id)
+            print("self.record_id END")
 
         if hasattr(self, "record_id"):
             return {"record": self.record_id, "host": host}
@@ -96,6 +108,7 @@ class Dataverse(DoiProvider):
 
         yield f"Fetching Dataverse record {record_id}.\n"
         url = f'{host["url"]}/api/datasets/:persistentId?persistentId={record_id}'
+        print(f'Downloading from {url}')
 
         resp = self.urlopen(url, headers={"accept": "application/json"})
         record = resp.json()["data"]

@@ -49,6 +49,7 @@ class DoiProvider(ContentProvider):
             doi = normalize_doi(doi)
 
             try:
+                self.log.info(f"DEBUG: About to request DOI: {doi}\n")
                 resp = self._request(f"https://doi.org/{doi}")
                 resp.raise_for_status()
             except HTTPError as e:
@@ -60,6 +61,7 @@ class DoiProvider(ContentProvider):
                 # default Git provider as this leads to a misleading error.
                 logging.error(f"DOI {doi} does not resolve: {e}")
                 raise
+            self.log.info(f"DEBUG: returning URL {resp.url}\n")
             return resp.url
         else:
             # Just return what is actulally just a URL

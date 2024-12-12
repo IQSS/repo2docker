@@ -443,6 +443,10 @@ def deep_get(dikt, path):
 
     deep_get(data, "data.files.0") == data["data"]["files"][0]
     """
+    print("dikt BEGIN")
+    print(dikt)
+    print("dikt END")
+    print("path: " + path)
     value = dikt
     for component in path.split("."):
         if component.isdigit():
@@ -471,6 +475,7 @@ def normalize_doi(val):
     """Return just the DOI (e.g. 10.1234/jshd123)
     from a val that could include a url or doi
     (e.g. https://doi.org/10.1234/jshd123)"""
+    print("calling normalize_doi()...")
     m = doi_regexp.match(val)
     return m.group(2)
 
