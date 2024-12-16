@@ -54,37 +54,7 @@ class Dataverse(DoiProvider):
             return
 
         query_args = parse_qs(parsed_url.query)
-        # Corner case handling
-        if parsed_url.path.startswith("/file.xhtml"):
-            # There's no way of getting file information using its persistentId, the only thing we can do is assume that doi
-            # is structured as "doi:<dataset_doi>/<file_doi>" and try to handle dataset that way.
-            new_doi = doi.rsplit("/", 1)[0]
-            if new_doi == doi:
-                # tough luck :( Avoid inifite recursion and exit.
-                return
-            return self.detect(new_doi)
-        elif parsed_url.path.startswith("/api/access/datafile"):
-            # Raw url pointing to a datafile is a typical output from an External Tool integration
-            entity_id = os.path.basename(parsed_url.path)
-            search_query = "q=entityId:" + entity_id + "&type=file"
-            # Knowing the file identifier query search api to get parent dataset
-            search_url = urlunparse(
-                parsed_url._replace(path="/api/search", query=search_query)
-            )
-            self.log.debug("Querying Dataverse: " + search_url)
-            data = self.urlopen(search_url).json()["data"]
-            if data["count_in_response"] != 1:
-                self.log.debug(
-                    f"Dataverse search query failed!\n - doi: {doi}\n - url: {url}\n - resp: {json.dump(data)}\n"
-                )
-                return
-
-            self.record_id = deep_get(data, "items.0.dataset_persistent_id")
-        elif (
-            parsed_url.path.startswith("/dataset.xhtml")
-            and "persistentId" in query_args
-        ):
-            self.record_id = deep_get(query_args, "persistentId.0")
+        self.record_id = deep_get(query_args, "persistentId.0")
 
         if hasattr(self, "record_id"):
             return {"record": self.record_id, "host": host}
